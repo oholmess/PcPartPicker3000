@@ -21,13 +21,23 @@ const BrandDistributionChart = () => {
             return acc;
           }, {});
 
-          const dataForChart = Object.entries(brandCounts)
+          let sortedBrands = Object.entries(brandCounts)
             .map(([brand, value]) => ({
               name: brand,
               value
             }))
             .sort((a, b) => b.value - a.value);
-          setChartData(dataForChart);
+
+          if (sortedBrands.length > 10) {
+            const top10Brands = sortedBrands.slice(0, 10);
+            const otherBrandsValue = sortedBrands.slice(10).reduce((acc, brand) => acc + brand.value, 0);
+            if (otherBrandsValue > 0) {
+              top10Brands.push({ name: "Other", value: otherBrandsValue });
+            }
+            sortedBrands = top10Brands;
+          }
+
+          setChartData(sortedBrands);
         } else {
           setChartData([]);
         }
