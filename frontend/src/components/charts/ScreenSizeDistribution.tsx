@@ -1,9 +1,5 @@
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from "recharts";
-import { 
-  getLaptopDataPromise,
-  Laptop
-} from "@/services/laptopData";
 
 const ScreenSizeDistribution = () => {
   const [chartData, setChartData] = useState<any[]>([]);
@@ -13,11 +9,16 @@ const ScreenSizeDistribution = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const laptops = await getLaptopDataPromise();
-        if (laptops && laptops.length > 0) {
-          const screenSizeCounts = laptops.reduce<Record<string, number>>((acc, laptop) => {
-            const size = laptop.screenSize.toString();
-            acc[size] = (acc[size] || 0) + 1;
+        const response = await fetch('/laptop_screen_sizes.json');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const screenSizesInches: number[] = await response.json();
+
+        if (screenSizesInches && screenSizesInches.length > 0) {
+          const screenSizeCounts = screenSizesInches.reduce<Record<string, number>>((acc, size_in) => {
+            const sizeKey = size_in.toString();
+            acc[sizeKey] = (acc[sizeKey] || 0) + 1;
             return acc;
           }, {});
 

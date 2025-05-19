@@ -1,9 +1,8 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import OfferComparisonChart from "@/components/charts/OfferComparisonChart";
+import RamPriceChart from "@/components/charts/RamPriceChart";
 import ScreenSizeDistribution from "@/components/charts/ScreenSizeDistribution";
 import ProductTypePriceDistribution from "@/components/charts/ProductTypePriceDistribution";
 import BrandDistributionChart from "@/components/charts/BrandDistributionChart";
@@ -30,16 +29,16 @@ const Index = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Top 10 Laptop Models</CardTitle>
+            <CardTitle>RAM vs. Average Price</CardTitle>
           </CardHeader>
           <CardContent>
-            <OfferComparisonChart />
+            <RamPriceChart />
           </CardContent>
         </Card>
 
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Screen Size Distribution</CardTitle>
+            <CardTitle>Screen Size Distribution of Laptops</CardTitle>
           </CardHeader>
           <CardContent>
             <ScreenSizeDistribution />
