@@ -4,7 +4,13 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { laptopData, getCPUs, getGPUs, getOSes, Laptop } from "@/services/laptopData";
+import { 
+  getLaptopDataPromise, // Changed: Was laptopData
+  getCPUs, 
+  getGPUs, 
+  getOSes, 
+  Laptop 
+} from "@/services/laptopData";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
@@ -88,26 +94,46 @@ const Prescriptive = () => {
   const [os, setOs] = useState<string>("");
   const [similarLaptops, setSimilarLaptops] = useState<(Laptop & { similarityScore?: number })[]>([]);
 
-  // Options for dropdowns
-  const cpuOptions = useMemo(() => getCPUs(), []);
-  const gpuOptions = useMemo(() => getGPUs(), []);
-  const osOptions = useMemo(() => getOSes(), []);
+  // State for all laptop data and dropdown options
+  const [allLaptops, setAllLaptops] = useState<Laptop[]>([]);
+  const [cpuOptions, setCpuOptions] = useState<string[]>([]);
+  const [gpuOptions, setGpuOptions] = useState<string[]>([]);
+  const [osOptions, setOsOptions] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Added loading state
 
-  // Set defaults on initial load
+  // Fetch data on component mount
   useEffect(() => {
-    if (cpuOptions.length > 0 && cpu === "") {
-      setCpu(cpuOptions[0]);
-    }
-    if (gpuOptions.length > 0 && gpu === "") {
-      setGpu(gpuOptions[0]);
-    }
-    if (osOptions.length > 0 && os === "") {
-      setOs(osOptions[0]);
-    }
-  }, [cpuOptions, gpuOptions, osOptions, cpu, gpu, os]);
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const laptops = await getLaptopDataPromise();
+        setAllLaptops(laptops);
+
+        const cpus = await getCPUs();
+        setCpuOptions(cpus);
+        if (cpus.length > 0 && cpu === "") setCpu(cpus[0]);
+
+        const gpus = await getGPUs();
+        setGpuOptions(gpus);
+        if (gpus.length > 0 && gpu === "") setGpu(gpus[0]);
+
+        const oses = await getOSes();
+        setOsOptions(oses);
+        if (oses.length > 0 && os === "") setOs(oses[0]);
+
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+        // Optionally, set some error state here
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []); // Removed cpu, gpu, os from dependencies as initial setting is handled in fetchData
 
   // Find similar laptops
   const findSimilar = () => {
+    if (isLoading || allLaptops.length === 0) return; // Don't run if loading or no data
     const queryLaptop = {
       ram,
       storage,
@@ -117,9 +143,17 @@ const Prescriptive = () => {
       os,
     };
     
-    const results = findSimilarLaptops(queryLaptop, laptopData, 5);
+    const results = findSimilarLaptops(queryLaptop, allLaptops, 5); // Changed: Use allLaptops state
     setSimilarLaptops(results);
   };
+
+  if (isLoading) { // Added loading indicator
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-2xl text-muted-foreground">Loading recommendations...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -173,7 +207,7 @@ const Prescriptive = () => {
 
             <div className="space-y-1">
               <Label htmlFor="cpu">CPU</Label>
-              <Select value={cpu} onValueChange={setCpu}>
+              <Select value={cpu} onValueChange={setCpu} disabled={isLoading || cpuOptions.length === 0}>
                 <SelectTrigger id="cpu">
                   <SelectValue placeholder="Select CPU" />
                 </SelectTrigger>
@@ -189,7 +223,7 @@ const Prescriptive = () => {
 
             <div className="space-y-1">
               <Label htmlFor="gpu">GPU</Label>
-              <Select value={gpu} onValueChange={setGpu}>
+              <Select value={gpu} onValueChange={setGpu} disabled={isLoading || gpuOptions.length === 0}>
                 <SelectTrigger id="gpu">
                   <SelectValue placeholder="Select GPU" />
                 </SelectTrigger>
@@ -221,7 +255,7 @@ const Prescriptive = () => {
 
             <div className="space-y-1">
               <Label htmlFor="os">Operating System</Label>
-              <Select value={os} onValueChange={setOs}>
+              <Select value={os} onValueChange={setOs} disabled={isLoading || osOptions.length === 0}>
                 <SelectTrigger id="os">
                   <SelectValue placeholder="Select OS" />
                 </SelectTrigger>
@@ -239,6 +273,7 @@ const Prescriptive = () => {
             <Button 
               onClick={findSimilar}
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              disabled={isLoading} // Added disabled state
             >
               Find Similar Laptops
             </Button>
@@ -269,13 +304,13 @@ const Prescriptive = () => {
                         <TableCell className="font-medium">
                           <div>{laptop.title}</div>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            <Badge className="bg-blue-50 text-blue-700 border-blue-200">
                               {laptop.ram}GB
                             </Badge>
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            <Badge className="bg-green-50 text-green-700 border-green-200">
                               {laptop.storage}GB
                             </Badge>
-                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                            <Badge className="bg-purple-50 text-purple-700 border-purple-200">
                               {laptop.screenSize}"
                             </Badge>
                           </div>

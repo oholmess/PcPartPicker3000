@@ -1,7 +1,9 @@
-
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { laptopData, Laptop } from "@/services/laptopData";
+import { 
+  getLaptopDataPromise,
+  Laptop 
+} from "@/services/laptopData";
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -110,29 +112,51 @@ const Segmentation = () => {
   const [yAxis, setYAxis] = useState<string>("normalizedRAM");
   const [numClusters, setNumClusters] = useState<number>(3);
 
+  // State for all laptop data
+  const [allLaptops, setAllLaptops] = useState<Laptop[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Fetch data on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const laptops = await getLaptopDataPromise();
+        setAllLaptops(laptops);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   // Prepare data for clustering
   const processedData = useMemo(() => {
+    if (isLoading || allLaptops.length === 0) return []; // Check loading and data
+
     // Normalize features for better clustering
-    const ramValues = laptopData.map(laptop => laptop.ram);
+    const ramValues = allLaptops.map(laptop => laptop.ram);
     const minRam = Math.min(...ramValues);
     const maxRam = Math.max(...ramValues);
     
-    const screenSizeValues = laptopData.map(laptop => laptop.screenSize);
+    const screenSizeValues = allLaptops.map(laptop => laptop.screenSize);
     const minScreenSize = Math.min(...screenSizeValues);
     const maxScreenSize = Math.max(...screenSizeValues);
     
-    const priceValues = laptopData.map(laptop => laptop.price);
+    const priceValues = allLaptops.map(laptop => laptop.price);
     const minPrice = Math.min(...priceValues);
     const maxPrice = Math.max(...priceValues);
     
-    const productTypes = Array.from(new Set(laptopData.map(laptop => laptop.productType)));
+    const productTypes = Array.from(new Set(allLaptops.map(laptop => laptop.productType)));
     
-    const normalizedData = laptopData.map(laptop => ({
+    const normalizedData = allLaptops.map(laptop => ({
       ...laptop,
-      normalizedRAM: (laptop.ram - minRam) / (maxRam - minRam),
-      normalizedScreenSize: (laptop.screenSize - minScreenSize) / (maxScreenSize - minScreenSize),
-      normalizedPrice: (laptop.price - minPrice) / (maxPrice - minPrice),
-      normalizedProductType: productTypes.indexOf(laptop.productType) / productTypes.length
+      normalizedRAM: maxRam === minRam ? 0 : (laptop.ram - minRam) / (maxRam - minRam), // Added check for division by zero
+      normalizedScreenSize: maxScreenSize === minScreenSize ? 0 : (laptop.screenSize - minScreenSize) / (maxScreenSize - minScreenSize), // Added check for division by zero
+      normalizedPrice: maxPrice === minPrice ? 0 : (laptop.price - minPrice) / (maxPrice - minPrice), // Added check for division by zero
+      normalizedProductType: productTypes.length === 0 ? 0 : productTypes.indexOf(laptop.productType) / productTypes.length // Added check for division by zero
     }));
     
     // Perform clustering
@@ -140,7 +164,7 @@ const Segmentation = () => {
     
     // Reduce dimensions for visualization
     return reduceDimensions(clusteredData, xAxis, yAxis);
-  }, [numClusters, xAxis, yAxis]);
+  }, [allLaptops, isLoading, numClusters, xAxis, yAxis]); // Added isLoading and allLaptops
 
   // Colors for each cluster
   const clusterColors = ["#2563eb", "#7c3aed", "#dc2626", "#16a34a", "#ea580c"];
@@ -179,18 +203,26 @@ const Segmentation = () => {
       const data = payload[0].payload;
       return (
         <div className="bg-white p-4 border rounded shadow-lg">
-          <p className="font-semibold">{data.title}</p>
-          <p>Brand: {data.brand}</p>
-          <p>Price: ${data.price}</p>
-          <p>RAM: {data.ram}GB</p>
-          <p>Screen: {data.screenSize}"</p>
-          <p>Type: {data.productType}</p>
-          <p className="mt-2 font-semibold">Cluster: {data.cluster + 1}</p>
+          <p className="font-semibold">{data.title || 'N/A'}</p> {/* Added fallback for title */}
+          <p>Brand: {data.brand || 'N/A'}</p> {/* Added fallback for brand */}
+          <p>Price: ${data.price !== undefined ? data.price.toFixed(2) : 'N/A'}</p> {/* Added formatting and fallback */}
+          <p>RAM: {data.ram !== undefined ? data.ram : 'N/A'}GB</p> {/* Added fallback */}
+          <p>Screen: {data.screenSize !== undefined ? data.screenSize.toFixed(1) : 'N/A'}"</p> {/* Added formatting and fallback */}
+          <p>Type: {data.productType || 'N/A'}</p> {/* Added fallback */}
+          <p className="mt-2 font-semibold">Cluster: {(data.cluster !== undefined ? data.cluster + 1 : 'N/A')}</p> {/* Added fallback */}
         </div>
       );
     }
     return null;
   };
+
+  if (isLoading) { // Added loading indicator
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-2xl text-muted-foreground">Loading segmentation data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -322,7 +354,7 @@ const Segmentation = () => {
                     ></div>
                     <span className="font-medium">Cluster {item.cluster + 1}</span>
                   </div>
-                  <Badge variant="outline">{item.count} laptops</Badge>
+                  <Badge>{item.count} laptops</Badge>
                 </div>
               ))}
             </div>

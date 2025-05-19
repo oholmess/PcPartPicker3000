@@ -1,12 +1,17 @@
-
 import React, { useState, useMemo, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { laptopData, getCPUs, getGPUs, getOSes, Laptop } from "@/services/laptopData";
+import { 
+  getLaptopDataPromise,
+  getCPUs, 
+  getGPUs, 
+  getOSes, 
+  Laptop 
+} from "@/services/laptopData";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ScatterChart, Scatter, ZAxis, Cell } from "recharts";
 
@@ -32,23 +37,41 @@ const Prediction = () => {
   const [os, setOs] = useState<string>("");
   const [predictedPrice, setPredictedPrice] = useState<number | null>(null);
 
-  // Options for dropdowns
-  const cpuOptions = useMemo(() => getCPUs(), []);
-  const gpuOptions = useMemo(() => getGPUs(), []);
-  const osOptions = useMemo(() => getOSes(), []);
+  // State for all laptop data and dropdown options
+  const [allLaptops, setAllLaptops] = useState<Laptop[]>([]);
+  const [cpuOptions, setCpuOptions] = useState<string[]>([]);
+  const [gpuOptions, setGpuOptions] = useState<string[]>([]);
+  const [osOptions, setOsOptions] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Set defaults on initial load
+  // Fetch data on component mount
   useEffect(() => {
-    if (cpuOptions.length > 0 && cpu === "") {
-      setCpu(cpuOptions[0]);
-    }
-    if (gpuOptions.length > 0 && gpu === "") {
-      setGpu(gpuOptions[0]);
-    }
-    if (osOptions.length > 0 && os === "") {
-      setOs(osOptions[0]);
-    }
-  }, [cpuOptions, gpuOptions, osOptions, cpu, gpu, os]);
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const laptops = await getLaptopDataPromise();
+        setAllLaptops(laptops);
+
+        const cpus = await getCPUs();
+        setCpuOptions(cpus);
+        if (cpus.length > 0 && cpu === "") setCpu(cpus[0]);
+
+        const gpus = await getGPUs();
+        setGpuOptions(gpus);
+        if (gpus.length > 0 && gpu === "") setGpu(gpus[0]);
+
+        const oses = await getOSes();
+        setOsOptions(oses);
+        if (oses.length > 0 && os === "") setOs(oses[0]);
+
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []); // Initial fetch
 
   // Correlation data for visualization
   const correlationData = useMemo(() => {
@@ -69,17 +92,19 @@ const Prediction = () => {
 
   // Scatter plot data showing price vs feature values
   const scatterData = useMemo(() => {
-    if (!laptopData) return [];
+    if (isLoading || allLaptops.length === 0) return []; // Changed: Use allLaptops state and check loading
     
-    return laptopData.map(laptop => ({
+    return allLaptops.map(laptop => ({
       ram: laptop.ram,
       price: laptop.price,
       brand: laptop.brand
     }));
-  }, []);
+  }, [allLaptops, isLoading]); // Added isLoading and allLaptops to dependencies
 
   // Price prediction function (simplified simulation)
   const predictPrice = () => {
+    if (isLoading) return; // Don't predict if loading
+
     // Base price based on CPU
     let basePrice = 500;
     if (cpu.includes("i7") || cpu.includes("Ryzen 7") || cpu.includes("M2")) {
@@ -122,6 +147,14 @@ const Prediction = () => {
     
     setPredictedPrice(finalPrice);
   };
+
+  if (isLoading) { // Added loading indicator
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-2xl text-muted-foreground">Loading prediction tools...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -175,7 +208,7 @@ const Prediction = () => {
 
             <div className="space-y-2">
               <Label htmlFor="cpu">CPU</Label>
-              <Select value={cpu} onValueChange={setCpu}>
+              <Select value={cpu} onValueChange={setCpu} disabled={isLoading || cpuOptions.length === 0}>
                 <SelectTrigger id="cpu">
                   <SelectValue placeholder="Select CPU" />
                 </SelectTrigger>
@@ -207,7 +240,7 @@ const Prediction = () => {
 
             <div className="space-y-2">
               <Label htmlFor="gpu">GPU</Label>
-              <Select value={gpu} onValueChange={setGpu}>
+              <Select value={gpu} onValueChange={setGpu} disabled={isLoading || gpuOptions.length === 0}>
                 <SelectTrigger id="gpu">
                   <SelectValue placeholder="Select GPU" />
                 </SelectTrigger>
@@ -239,7 +272,7 @@ const Prediction = () => {
 
             <div className="space-y-2">
               <Label htmlFor="os">Operating System</Label>
-              <Select value={os} onValueChange={setOs}>
+              <Select value={os} onValueChange={setOs} disabled={isLoading || osOptions.length === 0}>
                 <SelectTrigger id="os">
                   <SelectValue placeholder="Select OS" />
                 </SelectTrigger>
@@ -253,12 +286,9 @@ const Prediction = () => {
               </Select>
             </div>
 
-            <Button 
-              onClick={predictPrice}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-            >
-              Predict Price
-            </Button>
+            <CardFooter>
+              <Button onClick={predictPrice} className="w-full" disabled={isLoading}>Predict Price</Button>
+            </CardFooter>
 
             {predictedPrice !== null && (
               <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 text-center">
