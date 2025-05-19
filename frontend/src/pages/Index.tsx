@@ -30,7 +30,7 @@ const Index = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Offer Comparison</CardTitle>
+            <CardTitle>Top 10 Laptop Models</CardTitle>
           </CardHeader>
           <CardContent>
             <OfferComparisonChart />
