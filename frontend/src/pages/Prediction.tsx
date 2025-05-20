@@ -53,6 +53,7 @@ const Prediction = () => {
   // output
   const [predictedPrice, setPredictedPrice] = useState<number | null>(null);
   const [similarProducts, setSimilarProducts] = useState<any>(null);
+  const [featureImportances, setFeatureImportances] = useState<any>(null);
 
   // State for all laptop data and dropdown options
   const [allLaptops, setAllLaptops] = useState<Laptop[]>([]);
@@ -221,16 +222,27 @@ const Prediction = () => {
       }
     }
 
-    try {
-      const response = await getPricePrediction(data);
-      console.log(response)
-      setPredictedPrice(response.predicted_price);
-    } catch (error) {            
-      console.error("Failed to get price prediction:",{message: error.message,
-      responseData: error.response?.data,
-      status: error.response?.status,
-      fullError: error});
-    }
+    // try {
+    //   const response = await getPricePrediction(data);
+    //   console.log(response)
+    //   setPredictedPrice(response.predicted_price);
+
+    //   const importanceSum = Object.values(response.feature_importances).reduce((sum, importance) => Number(sum) + Number(importance), 0);
+    //   // each feature is a key and the value is the importance
+    //   // first map every pair to a feature importance object
+    //   const formattedFeatureImportances = Object.entries(response.feature_importances).map(([feature, importance]) => ({
+    //     feature,
+    //     importance: Number(importance) / Number(importanceSum)
+    //   }));
+    //   const sortedFeatureImportances = formattedFeatureImportances.sort((a, b) => b.importance - a.importance);
+
+    //   setFeatureImportances(sortedFeatureImportances);
+    // } catch (error) {            
+    //   console.error("Failed to get price prediction:",{message: error.message,
+    //   responseData: error.response?.data,
+    //   status: error.response?.status,
+    //   fullError: error});
+    // }
 
 
     try {
@@ -248,7 +260,7 @@ const Prediction = () => {
     }
   };
 
-  console.log(similarProducts.similar_products)
+  // console.log(similarProducts.similar_products)
 
   return (
     <div className="space-y-8">
@@ -561,26 +573,26 @@ const Prediction = () => {
                   Similar Products
                 </h3>
                 {similarProducts.similar_products.map((prod, index) => (
-                  <div key={index}>
-                    <h3 className="text-lg font-semibold text-black dark:text-blue-200">
-                      {"Title"}
-                    </h3>
-                    <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                      {"alimentacion_vatios_hora: " + prod.alimentacion_vatios_hora + "\n"}
-                      {"camara_resolucion_pixeles: " + prod.camara_resolucion_pixeles + "\n"}
-                      {"disco_duro_capacidad_de_memoria_ssd_gb: " + prod.disco_duro_capacidad_de_memoria_ssd_gb + "\n"}
-                      {"grafica_tarjeta: " + prod.grafica_tarjeta + "\n"}
-                      {"pantalla_resolucion_pixeles: " + prod.pantalla_resolucion_pixeles + "\n"}
-                      {"pantalla_tecnologia: " + prod.pantalla_tecnologia + "\n"}
-                      {"procesador: " + prod.procesador + "\n"}
-                      {"procesador_frecuencia_turbo_max_ghz: " + prod.procesador_frecuencia_turbo_max_ghz + "\n"}
-                      {"procesador_numero_nucleos: " + prod.procesador_numero_nucleos + "\n"}
-                      {"ram_frecuencia_de_la_memoria_mhz: " + prod.ram_frecuencia_de_la_memoria_mhz + "\n"}
-                      {"ram_memoria_gb: " + prod.ram_memoria_gb + "\n"}
-                      {"ram_tipo: " + prod.ram_tipo + "\n"}
-                      {"similarity_distance: " + prod.similarity_distance + "\n"}
-                      {"sistema_operativo_sistema_operativo: " + prod.sistema_operativo_sistema_operativo + "\n"}
-                    </p>
+                  <div key={index} className="mt-2 text-left">
+                    <h4 className="text-md font-semibold text-black dark:text-blue-200">
+                      {prod.titulo}
+                    </h4>
+                    <div className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                      <p>{"alimentacion_vatios_hora: " + prod.alimentacion_vatios_hora}</p>
+                      <p>{"camara_resolucion_pixeles: " + prod.camara_resolucion_pixeles}</p>
+                      <p>{"disco_duro_capacidad_de_memoria_ssd_gb: " + prod.disco_duro_capacidad_de_memoria_ssd_gb}</p>
+                      <p>{"grafica_tarjeta: " + prod.grafica_tarjeta}</p>
+                      <p>{"pantalla_resolucion_pixeles: " + prod.pantalla_resolucion_pixeles}</p>
+                      <p>{"pantalla_tecnologia: " + prod.pantalla_tecnologia}</p>
+                      <p>{"procesador: " + prod.procesador}</p>
+                      <p>{"procesador_frecuencia_turbo_max_ghz: " + prod.procesador_frecuencia_turbo_max_ghz}</p>
+                      <p>{"procesador_numero_nucleos: " + prod.procesador_numero_nucleos}</p>
+                      <p>{"ram_frecuencia_de_la_memoria_mhz: " + prod.ram_frecuencia_de_la_memoria_mhz}</p>
+                      <p>{"ram_memoria_gb: " + prod.ram_memoria_gb}</p>
+                      <p>{"ram_tipo: " + prod.ram_tipo}</p>
+                      <p>{"similarity_distance: " + prod.similarity_distance}</p>
+                      <p>{"sistema_operativo_sistema_operativo: " + prod.sistema_operativo_sistema_operativo}</p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -601,19 +613,19 @@ const Prediction = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px] w-full">
+              <div className="h-[350px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={featureImportance}
+                    data={featureImportances}
                     layout="vertical"
-                    margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
+                    margin={{ top: 5, right: 30, left: 150, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                     <XAxis type="number" domain={[0, 'dataMax + 0.05']} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
-                    <YAxis type="category" dataKey="feature" width={80} />
+                    <YAxis type="category" dataKey="feature" width={120} interval={0} />
                     <Tooltip formatter={(value) => [`${(Number(value) * 100).toFixed(1)}%`, 'Importance']} />
                     <Bar dataKey="importance" fill="#4f46e5">
-                      {featureImportance.map((entry, index) => (
+                      {featureImportances?.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#4f46e5' : '#7c3aed'} />
                       ))}
                     </Bar>

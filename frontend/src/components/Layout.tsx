@@ -15,7 +15,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: "Overview", path: "/", icon: <PieChart className="w-5 h-5" /> },
     { name: "Segmentation", path: "/segmentation", icon: <Table className="w-5 h-5" /> },
     { name: "Prediction", path: "/prediction", icon: <LineChart className="w-5 h-5" /> },
-    { name: "Similar Offers", path: "/prescriptive", icon: <BarChart3 className="w-5 h-5" /> }
+    // { name: "Similar Offers", path: "/prescriptive", icon: <BarChart3 className="w-5 h-5" /> }
   ];
 
   return (

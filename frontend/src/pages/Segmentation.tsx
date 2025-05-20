@@ -9,6 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+import productClusters from "@/assets/product_clusters.jpeg"
+import productDistribution from "@/assets/product_distribution.jpeg"
+
 interface EngineeredScreenDetail {
   title: string;
   engineered_screen_size_inches: number;
@@ -204,7 +207,7 @@ const Segmentation = () => {
   }, [allLaptops, engineeredScreenSizes, isLoading, numClusters, xAxis, yAxis]);
 
   // Colors for each cluster
-  const clusterColors = ["#2563eb", "#7c3aed", "#dc2626", "#16a34a", "#ea580c"];
+  const clusterColors = ["#00FF00", "#0000FF"];
   
   // Group data by cluster
   const clusterGroups = useMemo(() => {
@@ -280,85 +283,15 @@ const Segmentation = () => {
         </p>
       </div>
 
+      <div className="w-full aspect-auto">
+        <img src={productClusters} alt="Product Clusters" className="w-full h-full object-contain" />
+      </div>
+
+      <div className="w-full aspect-auto">
+        <img src={productDistribution} alt="Product Distribution" className="w-full h-full object-contain" />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="shadow-md md:col-span-2">
-          <CardHeader>
-            <CardTitle>K-Means Clustering Visualization</CardTitle>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
-              <div>
-                <Label htmlFor="x-axis">X-Axis Feature</Label>
-                <Select value={xAxis} onValueChange={setXAxis}>
-                  <SelectTrigger id="x-axis">
-                    <SelectValue placeholder="Select feature for X-axis" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {featureOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="y-axis">Y-Axis Feature</Label>
-                <Select value={yAxis} onValueChange={setYAxis}>
-                  <SelectTrigger id="y-axis">
-                    <SelectValue placeholder="Select feature for Y-axis" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {featureOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="num-clusters">Number of Clusters (K)</Label>
-                <Select value={numClusters.toString()} onValueChange={(value) => setNumClusters(parseInt(value))}>
-                  <SelectTrigger id="num-clusters">
-                    <SelectValue placeholder="Select K" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[2, 3, 4, 5].map(k => (
-                      <SelectItem key={k} value={k.toString()}>
-                        {k}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="h-[600px]"> {/* Increased height for better visualization */}
-            {processedData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                  <CartesianGrid />
-                  <XAxis type="number" dataKey="x" name={featureOptions.find(f => f.value === xAxis)?.label || xAxis} />
-                  <YAxis type="number" dataKey="y" name={featureOptions.find(f => f.value === yAxis)?.label || yAxis} />
-                  <ZAxis type="number" dataKey="cluster" range={[100, 500]} name="Cluster" />
-                  <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
-                  <Legend />
-                  {Object.entries(clusterGroups).map(([cluster, items]) => (
-                    <Scatter 
-                      key={cluster} 
-                      name={`Cluster ${parseInt(cluster) + 1} (${items.length})`} 
-                      data={items} 
-                      fill={clusterColors[parseInt(cluster) % clusterColors.length]} 
-                    />
-                  ))}
-                </ScatterChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex justify-center items-center h-full">
-                <p className="text-muted-foreground">No data available for clustering or not enough data points.</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         <Card className="shadow-md">
           <CardHeader>
@@ -366,23 +299,29 @@ const Segmentation = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {clusterCounts.map((item) => (
-                <div key={item.cluster} className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <div 
-                      className="w-4 h-4 rounded-full mr-2" 
-                      style={{ backgroundColor: clusterColors[item.cluster % clusterColors.length] }}
-                    ></div>
-                    <span className="font-medium">Cluster {item.cluster + 1}</span>
-                  </div>
-                  <Badge>{item.count} laptops</Badge>
+              <div key={"laptops"} className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <div 
+                    className="w-4 h-4 rounded-full mr-2" 
+                    style={{ backgroundColor: clusterColors[0 % clusterColors.length] }}
+                  ></div>
+                  <span className="font-medium">Laptops</span>
                 </div>
-              ))}
+              </div>
+              <div key={"desktops"} className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <div 
+                    className="w-4 h-4 rounded-full mr-2" 
+                    style={{ backgroundColor: clusterColors[1 % clusterColors.length] }}
+                  ></div>
+                  <span className="font-medium">Desktops</span>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-md">
+        {/* <Card className="shadow-md">
           <CardHeader>
             <CardTitle>Cluster Characteristics</CardTitle>
           </CardHeader>
@@ -426,7 +365,7 @@ const Segmentation = () => {
               })}
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </div>
   );
