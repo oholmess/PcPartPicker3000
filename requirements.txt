@@ -1,0 +1,12 @@
+pandas
+numpy
+matplotlib
+seaborn
+missingno
+scikit-learn
+lightgbm
+xgboost
+# scipy # Implied by from scipy.cluster.hierarchy import linkage, dendrogram
+# You might want to add specific versions if needed, e.g.:
+# pandas>=1.0.0
+# scikit-learn==1.0.2

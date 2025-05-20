@@ -222,27 +222,27 @@ const Prediction = () => {
       }
     }
 
-    // try {
-    //   const response = await getPricePrediction(data);
-    //   console.log(response)
-    //   setPredictedPrice(response.predicted_price);
+    try {
+      const response = await getPricePrediction(data);
+      console.log(response)
+      setPredictedPrice(response.predicted_price);
 
-    //   const importanceSum = Object.values(response.feature_importances).reduce((sum, importance) => Number(sum) + Number(importance), 0);
-    //   // each feature is a key and the value is the importance
-    //   // first map every pair to a feature importance object
-    //   const formattedFeatureImportances = Object.entries(response.feature_importances).map(([feature, importance]) => ({
-    //     feature,
-    //     importance: Number(importance) / Number(importanceSum)
-    //   }));
-    //   const sortedFeatureImportances = formattedFeatureImportances.sort((a, b) => b.importance - a.importance);
+      const importanceSum = Object.values(response.feature_importances).reduce((sum, importance) => Number(sum) + Number(importance), 0);
+      // each feature is a key and the value is the importance
+      // first map every pair to a feature importance object
+      const formattedFeatureImportances = Object.entries(response.feature_importances).map(([feature, importance]) => ({
+        feature,
+        importance: Number(importance) / Number(importanceSum)
+      }));
+      const sortedFeatureImportances = formattedFeatureImportances.sort((a, b) => b.importance - a.importance);
 
-    //   setFeatureImportances(sortedFeatureImportances);
-    // } catch (error) {            
-    //   console.error("Failed to get price prediction:",{message: error.message,
-    //   responseData: error.response?.data,
-    //   status: error.response?.status,
-    //   fullError: error});
-    // }
+      setFeatureImportances(sortedFeatureImportances);
+    } catch (error) {            
+      console.error("Failed to get price prediction:",{message: error.message,
+      responseData: error.response?.data,
+      status: error.response?.status,
+      fullError: error});
+    }
 
 
     try {
