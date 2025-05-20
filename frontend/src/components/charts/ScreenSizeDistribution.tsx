@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Label } from "recharts";
 
 const ScreenSizeDistribution = () => {
   const [chartData, setChartData] = useState<any[]>([]);
@@ -59,14 +59,20 @@ const ScreenSizeDistribution = () => {
             top: 5,
             right: 30,
             left: 20,
-            bottom: 5,
+            bottom: 40,
           }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="size" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
+          <XAxis
+            dataKey="size"
+            name="Screen Size"
+            label={{ value: "Screen Size (inches)", position: "insideBottom", offset: -25 }}
+            tickFormatter={(value) => `${value}"`}
+          />
+          <YAxis allowDecimals={false}>
+            <Label value="Frequency" angle={-90} position="insideLeft" style={{ textAnchor: 'middle' }} />
+          </YAxis>
+          <Tooltip formatter={(value: any) => [value, "Frequency"]} />
           <Bar dataKey="count" name="Frequency" fill="#7c3aed" />
         </BarChart>
       </ResponsiveContainer>

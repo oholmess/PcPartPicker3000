@@ -47,7 +47,7 @@ const Index = () => {
 
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Price Distribution by Product Type</CardTitle>
+            <CardTitle>Price Distribution by Top 7 Product Types</CardTitle>
           </CardHeader>
           <CardContent>
             <ProductTypePriceDistribution />
@@ -56,7 +56,7 @@ const Index = () => {
 
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Brand Distribution</CardTitle>
+            <CardTitle>Top 10 Popular Brands</CardTitle>
           </CardHeader>
           <CardContent>
             <BrandDistributionChart />

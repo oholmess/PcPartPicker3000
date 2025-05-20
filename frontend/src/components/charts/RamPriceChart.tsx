@@ -104,7 +104,7 @@ const RamPriceChart: React.FC = () => {
         margin={{
           top: 20,
           right: 30,
-          left: 20,
+          left: 40,
           bottom: 40,
         }}
       >
@@ -123,8 +123,15 @@ const RamPriceChart: React.FC = () => {
           unit="$"
           tickFormatter={(value) => `$${value.toFixed(0)}`}
           domain={[0, 'dataMax + 100']}
+          width={80}
         >
-          <Label value="Average Price ($)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle' }} />
+          <Label 
+            value="Average Price ($)" 
+            angle={-90} 
+            position="insideLeft" 
+            style={{ textAnchor: 'middle' }}
+            offset={-10}
+          />
         </YAxis>
         <Tooltip
           cursor={{ fill: 'transparent' }}
@@ -136,7 +143,6 @@ const RamPriceChart: React.FC = () => {
           }}
           labelFormatter={(label: number) => `RAM: ${label} GB`}
         />
-        <Legend verticalAlign="top" height={36}/>
         <Bar dataKey="averagePrice" name="Average Price" fill="#8884d8" />
       </BarChart>
     </ResponsiveContainer>

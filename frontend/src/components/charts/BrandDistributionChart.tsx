@@ -51,7 +51,7 @@ const BrandDistributionChart = () => {
     fetchData();
   }, []);
 
-  const COLORS = ['#2563eb', '#4f46e5', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#0d9488', '#0891b2'];
+  const COLORS = ['#2563eb', '#4f46e5', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#0d9488', '#0891b2', '#6b7280'];
 
   if (isLoading) {
     return <div className="h-[400px] w-full flex justify-center items-center"><p>Loading chart...</p></div>;
@@ -70,11 +70,11 @@ const BrandDistributionChart = () => {
             cx="50%"
             cy="50%"
             labelLine={false}
+            label={false}
             outerRadius={130}
             innerRadius={60}
             fill="#8884d8"
             dataKey="value"
-            label={({ name, percent }) => percent !== undefined ? `${name} ${(percent * 100).toFixed(0)}%` : name}
           >
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
