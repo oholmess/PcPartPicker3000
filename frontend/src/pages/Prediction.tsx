@@ -41,7 +41,7 @@ const Prediction = () => {
   const [gpu, setGpu] = useState<string>("");
   const [screenSize, setScreenSize] = useState<number>(15.6);
   const [os, setOs] = useState<string>("");
-  const [bluetoothVersion, setBluetoothVersion] = useState<string>("1");
+  const [bluetoothVersion, setBluetoothVersion] = useState<string>("5.1");
   //only for desktops
   const [psuWattage, setPsuWattage] = useState<number>(0);
   //only for laptops
@@ -52,7 +52,7 @@ const Prediction = () => {
 
   // output
   const [predictedPrice, setPredictedPrice] = useState<number | null>(null);
-  const [similarProducts, setSimilarProducts] = useState<string[]>([]);
+  const [similarProducts, setSimilarProducts] = useState<any>(null);
 
   // State for all laptop data and dropdown options
   const [allLaptops, setAllLaptops] = useState<Laptop[]>([]);
@@ -224,7 +224,7 @@ const Prediction = () => {
     try {
       const response = await getPricePrediction(data);
       console.log(response)
-      setPredictedPrice(response.data.predicted_price);
+      setPredictedPrice(response.predicted_price);
     } catch (error) {            
       console.error("Failed to get price prediction:",{message: error.message,
       responseData: error.response?.data,
@@ -235,8 +235,8 @@ const Prediction = () => {
 
     try {
       const simProds = await getKSimilarProducts(data);
-      console.log(simProds)
-      for (let prod in simProds) {
+      console.log(simProds.similar_products)
+      for (let prod in simProds.similar_products) {
         console.log(prod)
       }
       setSimilarProducts(simProds);
@@ -247,6 +247,8 @@ const Prediction = () => {
       fullError: error});
     }
   };
+
+  console.log(similarProducts.similar_products)
 
   return (
     <div className="space-y-8">
@@ -488,7 +490,7 @@ const Prediction = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="bluetoothVersion">Bluetooth Version</Label>
+                  <Label htmlFor="screenTechnology">Screen Technology</Label>
                   <Select value={screenTechnology} onValueChange={setScreenTechnology} disabled={isLoading}>
                     <SelectTrigger id="screenTechnology">
                       <SelectValue placeholder="Select Screen Technology" />
@@ -539,10 +541,6 @@ const Prediction = () => {
               </div>
             )}
 
-            <CardFooter>
-              <Button onClick={predictPrice} className="w-full" disabled={isLoading}>Predict Price</Button>
-            </CardFooter>
-
             {predictedPrice !== null && (
               <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 text-center">
                 <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200">
@@ -556,6 +554,41 @@ const Prediction = () => {
                 </p>
               </div>
             )}
+
+            {similarProducts !== null && (
+              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 text-center">
+                <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200">
+                  Similar Products
+                </h3>
+                {similarProducts.similar_products.map((prod, index) => (
+                  <div key={index}>
+                    <h3 className="text-lg font-semibold text-black dark:text-blue-200">
+                      {"Title"}
+                    </h3>
+                    <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                      {"alimentacion_vatios_hora: " + prod.alimentacion_vatios_hora + "\n"}
+                      {"camara_resolucion_pixeles: " + prod.camara_resolucion_pixeles + "\n"}
+                      {"disco_duro_capacidad_de_memoria_ssd_gb: " + prod.disco_duro_capacidad_de_memoria_ssd_gb + "\n"}
+                      {"grafica_tarjeta: " + prod.grafica_tarjeta + "\n"}
+                      {"pantalla_resolucion_pixeles: " + prod.pantalla_resolucion_pixeles + "\n"}
+                      {"pantalla_tecnologia: " + prod.pantalla_tecnologia + "\n"}
+                      {"procesador: " + prod.procesador + "\n"}
+                      {"procesador_frecuencia_turbo_max_ghz: " + prod.procesador_frecuencia_turbo_max_ghz + "\n"}
+                      {"procesador_numero_nucleos: " + prod.procesador_numero_nucleos + "\n"}
+                      {"ram_frecuencia_de_la_memoria_mhz: " + prod.ram_frecuencia_de_la_memoria_mhz + "\n"}
+                      {"ram_memoria_gb: " + prod.ram_memoria_gb + "\n"}
+                      {"ram_tipo: " + prod.ram_tipo + "\n"}
+                      {"similarity_distance: " + prod.similarity_distance + "\n"}
+                      {"sistema_operativo_sistema_operativo: " + prod.sistema_operativo_sistema_operativo + "\n"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <CardFooter>
+              <Button onClick={predictPrice} className="w-full" disabled={isLoading}>Predict Price</Button>
+            </CardFooter>
           </CardContent>
         </Card>
 
