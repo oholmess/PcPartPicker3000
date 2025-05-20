@@ -61,7 +61,7 @@ const Prediction = () => {
   const [osOptions, setOsOptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const bluetoothOptions = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
+  const bluetoothOptions = ["5.1", "5.2", "5.3", "5.4"];
 
   // Fetch data on component mount
   useEffect(() => {
@@ -183,6 +183,7 @@ const Prediction = () => {
         "device_type": deviceType,
         "feature_values": {
           "procesador": cpu,
+          "procesador_tipo": cpu,
           "procesador_frecuencia_turbo_max_ghz": clockSpeed,
           "procesador_numero_nucleos": cores,
           "grafica_tarjeta": gpu,
@@ -202,6 +203,7 @@ const Prediction = () => {
         "device_type": deviceType,
         "feature_values": {
           "procesador": cpu,
+          "procesador_tipo": cpu,
           "procesador_frecuencia_turbo_max_ghz": clockSpeed,
           "procesador_numero_nucleos": cores,
           "grafica_tarjeta": gpu,
@@ -220,14 +222,26 @@ const Prediction = () => {
     }
 
     try {
-      const simProds = await getKSimilarProducts(data);
-      console.log(simProds)
-      setSimilarProducts(simProds);
       const response = await getPricePrediction(data);
       console.log(response)
       setPredictedPrice(response.data.predicted_price);
     } catch (error) {            
       console.error("Failed to get price prediction:",{message: error.message,
+      responseData: error.response?.data,
+      status: error.response?.status,
+      fullError: error});
+    }
+
+
+    try {
+      const simProds = await getKSimilarProducts(data);
+      console.log(simProds)
+      for (let prod in simProds) {
+        console.log(prod)
+      }
+      setSimilarProducts(simProds);
+    } catch (error) {            
+      console.error("Failed to get K Similar Products:",{message: error.message,
       responseData: error.response?.data,
       status: error.response?.status,
       fullError: error});
