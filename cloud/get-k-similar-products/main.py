@@ -6,6 +6,7 @@ import joblib
 import os
 from google.cloud import storage
 import io
+import re
 
 # --- Configuration ---
 # These should match the features used when X_train_original_for_knn_lookup_DEVICE.csv was saved
@@ -15,7 +16,8 @@ DESKTOP_PREPROCESSOR_INPUT_FEATURES = [
     'procesador', 'procesador_frecuencia_turbo_max_ghz', 'procesador_numero_nucleos',
     'grafica_tarjeta', 'disco_duro_capacidad_de_memoria_ssd_gb', 'ram_memoria_gb',
     'ram_tipo', 'ram_frecuencia_de_la_memoria_mhz', 'sistema_operativo_sistema_operativo',
-    'comunicaciones_version_bluetooth', 'alimentacion_wattage_binned'
+    'comunicaciones_version_bluetooth', 'alimentacion_wattage_binned',
+    'procesador_tipo'
     # Add any other features the preprocessor was trained on for desktops
 ]
 LAPTOP_PREPROCESSOR_INPUT_FEATURES = [
@@ -24,7 +26,8 @@ LAPTOP_PREPROCESSOR_INPUT_FEATURES = [
     'ram_tipo', 'ram_frecuencia_de_la_memoria_mhz', 'sistema_operativo_sistema_operativo',
     'comunicaciones_version_bluetooth', 'alimentacion_vatios_hora',
     'camara_resolucion_pixeles', 'pantalla_tecnologia', 'pantalla_resolucion_pixeles',
-    'alimentacion_wattage_binned' # Assuming this was also used for laptop KNN
+    'alimentacion_wattage_binned',
+    'procesador_tipo'
     # Add any other features the preprocessor was trained on for laptops
 ]
 
@@ -43,19 +46,28 @@ LAPTOP_RETURN_FEATURES = [
     'pantalla_resolucion_pixeles', 'precio_mean' # Assuming precio_mean is in your X_train_original CSV
 ]
 
-GCS_BUCKET_NAME = "your-models-bucket-name" # REPLACE with your actual bucket name
+GCS_BUCKET_NAME = "df_engineered" # Make sure this is defined in your script
 
-# Global cache for models and data to reduce GCS calls on warm instances
-# Ensure these file names match what you upload to GCS
 MODEL_CACHE = {
-    "desktop": {"preprocessor": None, "nn_model": None, "x_train_original": None, "loaded": False,
-                "preprocessor_blob": "preprocessor_desktop_knn.joblib",
-                "nn_model_blob": "nn_model_desktop.joblib",
-                "x_train_blob": "X_train_original_for_knn_lookup_desktop.csv"},
-    "laptop": {"preprocessor": None, "nn_model": None, "x_train_original": None, "loaded": False,
-               "preprocessor_blob": "preprocessor_laptop_knn.joblib",
-               "nn_model_blob": "nn_model_laptop.joblib",
-               "x_train_blob": "X_train_original_for_knn_lookup_laptop.csv"}
+    "laptop": {
+        "preprocessor_blob": "models/kNN/laptop/preprocessor_laptop_knn.joblib",
+        "nn_model_blob": "models/kNN/laptop/nn_model_laptop.joblib",
+        "x_train_blob": "models/kNN/laptop/X_train_original_for_knn_lookup_laptop.csv",
+        "preprocessor": None, # To store the loaded object
+        "nn_model": None,     # To store the loaded object
+        "x_train_original": None, # To store the loaded object
+        "loaded": False
+    },
+    "desktop": {
+        "preprocessor_blob": "models/kNN/desktop/preprocessor_desktop_knn.joblib",
+        "nn_model_blob": "models/kNN/desktop/nn_model_desktop.joblib",
+        "x_train_blob": "models/kNN/desktop/X_train_original_for_knn_lookup_desktop.csv",
+        "preprocessor": None,
+        "nn_model": None,
+        "x_train_original": None,
+        "loaded": False
+    }
+    # Add other device types if you have them, following the same pattern
 }
 storage_client = None
 
@@ -89,6 +101,37 @@ def ensure_models_loaded(device_type):
         MODEL_CACHE[device_type]["loaded"] = True
         print(f"Finished loading for {device_type}.")
     return MODEL_CACHE[device_type]
+
+
+# --- Helper function to derive procesador_tipo ---
+def get_procesador_tipo(procesador_str):
+    if pd.isna(procesador_str) or not isinstance(procesador_str, str):
+        return np.nan
+
+    patterns_results = [
+        (r"Apple M\d*", "Apple M"),
+        (r"Core Ultra", "Core Ultra"),
+        (r"Core i(\d)", lambda m: f"Core i{m.group(1)}"),
+        (r"Intel N\d*", "Intel N"),
+        (r"Pentium", "Pentium"),
+        (r"Celeron", "Celeron"),
+        (r"Atom", "Atom"),
+        (r"Xeon", "Xeon"),
+        (r"Ryzen AI", "Ryzen AI"),
+        (r"Ryzen (\d)", lambda m: f"Ryzen {m.group(1)}"),
+        (r"Threadripper", "Threadripper"),
+        (r"EPYC", "EPYC"),
+        (r"Athlon", "Athlon")
+    ]
+
+    for pattern, result_val_or_func in patterns_results:
+        match = re.search(pattern, procesador_str, flags=re.IGNORECASE)
+        if match:
+            if callable(result_val_or_func):
+                return result_val_or_func(match)
+            return result_val_or_func
+    
+    return np.nan
 
 
 @functions_framework.http
@@ -206,6 +249,15 @@ def get_k_similar_products(request):
     # Create DataFrame for the query item, ensuring correct column order for preprocessor
     try:
         query_df_input = pd.DataFrame([feature_values])
+
+        # Derive 'procesador_tipo' if 'procesador' is present
+        if 'procesador' in query_df_input.columns:
+            query_df_input['procesador_tipo'] = query_df_input['procesador'].apply(get_procesador_tipo)
+        else:
+            # If 'procesador' isn't even in the input, 'procesador_tipo' will also be missing
+            # The loop below will add it as NaN if it's in preprocessor_input_features
+            pass 
+
         # Ensure all expected columns for preprocessor are present, fill missing with NaN
         for col in preprocessor_input_features:
             if col not in query_df_input.columns:

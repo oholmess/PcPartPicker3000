@@ -4,6 +4,8 @@ import numpy as np
 import joblib
 import os # To construct file paths for models
 import json # For pretty printing dictionaries
+from google.cloud import storage # Added
+import io # Added
 
 # Define the expected features for each device type
 # These must match the features the corresponding model was trained on.
@@ -23,6 +25,63 @@ LAPTOP_FEATURES = [
 
 # Assumption: Models were trained with log-transformed target. This should be consistent.
 MODEL_TRAINED_ON_LOG_TARGET = True
+
+# --- GCS Configuration & Model Caching ---
+GCS_BUCKET_NAME = "df_engineered"  # Replace with your actual bucket name
+
+MODEL_CACHE = {
+    "desktop": {
+        "model_blob": "models/price_prediction/desktop/desktop_model_pipeline.joblib", # Adjusted path
+        "pipeline": None,
+        "loaded": False
+    },
+    "laptop": {
+        "model_blob": "models/price_prediction/laptop/laptop_model_pipeline.joblib", # Adjusted path
+        "pipeline": None,
+        "loaded": False
+    }
+}
+storage_client = None
+
+def load_from_gcs_joblib(bucket_name, blob_name):
+    """Loads a joblib file from GCS."""
+    global storage_client
+    if storage_client is None:
+        storage_client = storage.Client()
+    
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+    
+    if not blob.exists():
+        print(f"Error: Blob {blob_name} not found in bucket {bucket_name}")
+        raise FileNotFoundError(f"Blob {blob_name} not found in bucket {bucket_name}")
+
+    print(f"Attempting to download and load joblib: gs://{bucket_name}/{blob_name}")
+    try:
+        with blob.open("rb") as f:
+            model = joblib.load(f)
+        print(f"Successfully loaded joblib from gs://{bucket_name}/{blob_name}")
+        return model
+    except Exception as e:
+        print(f"Error loading joblib from GCS (gs://{bucket_name}/{blob_name}): {e}")
+        raise
+
+def ensure_model_loaded(device_type):
+    """Loads the model for the given device_type from GCS if not already loaded."""
+    if not MODEL_CACHE[device_type]["loaded"]:
+        print(f"Loading model for {device_type} from GCS...")
+        try:
+            MODEL_CACHE[device_type]["pipeline"] = load_from_gcs_joblib(
+                GCS_BUCKET_NAME, 
+                MODEL_CACHE[device_type]["model_blob"]
+            )
+            MODEL_CACHE[device_type]["loaded"] = True
+            print(f"Finished loading model for {device_type}.")
+        except Exception as e:
+            # Log the error and re-raise to be caught by the main handler
+            print(f"Failed to load model for {device_type} from GCS. Error: {e}")
+            raise  # Re-raise the exception to be handled by the main endpoint
+    return MODEL_CACHE[device_type]["pipeline"]
 
 def get_aggregated_feature_importances(pipeline, original_feature_names):
     """
@@ -73,7 +132,8 @@ def get_aggregated_feature_importances(pipeline, original_feature_names):
             if transformed_name in original_feature_names:
                 base_name = transformed_name
 
-        aggregated_importances[base_name] = aggregated_importances.get(base_name, 0) + importances[i]
+        # Ensure values are Python floats for JSON serialization
+        aggregated_importances[base_name] = aggregated_importances.get(base_name, 0.0) + float(importances[i])
         # print(f"    Mapping: '{transformed_name}' (importance: {importances[i]}) to base_name: '{base_name}'")
             
     sorted_importances = dict(sorted(aggregated_importances.items(), key=lambda item: item[1], reverse=True))
@@ -168,11 +228,8 @@ def get_price_prediction(request):
 
     if device_type == 'desktop':
         required_features = DESKTOP_FEATURES
-        model_file_name = 'desktop_model_pipeline.joblib'
     else: # laptop
         required_features = LAPTOP_FEATURES
-        model_file_name = 'laptop_model_pipeline.joblib'
-    print(f"Using model_file_name: {model_file_name}")
     print(f"Required features for {device_type}: {required_features}")
 
     # Validate that all required features are in the input DataFrame (created from feature_values)
@@ -197,34 +254,30 @@ def get_price_prediction(request):
 
     model_pipeline = None
     try:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        model_path = os.path.join(current_dir, model_file_name)
+        model_pipeline = ensure_model_loaded(device_type)
         
-        print(f"Attempting to load model from: {model_path}")
-        if not os.path.exists(model_path):
-            error_msg = f"Model file '{model_file_name}' not found at {model_path}. Ensure it's deployed with the function."
-            print(f"Error: {error_msg}")
-            return ({'error': error_msg}, 500, cors_headers)
-            
-        model_pipeline = joblib.load(model_path)
-        print(f"Successfully loaded model: {model_file_name}")
+        print(f"Successfully ensured model is loaded for {device_type} via GCS.")
         print(f"Model pipeline object: {model_pipeline}")
+
+    except FileNotFoundError as e_fnf: # Specific catch for model not found in GCS by load_from_gcs_joblib
+        error_msg = f"Model file not found in GCS for {device_type}: {str(e_fnf)}"
+        print(f"Error: {error_msg}")
+        return ({'error': error_msg, 'details': 'Ensure model file exists in the configured GCS bucket and path.'}, 500, cors_headers)
     except EOFError as eof: # Common for corrupted or incomplete pickle files
-        error_msg = f"EOFError loading model '{model_file_name}': {str(eof)}. File might be corrupted or truncated."
+        error_msg = f"EOFError loading model for {device_type} from GCS: {str(eof)}. File might be corrupted or truncated."
         print(f"Error: {error_msg}")
         return ({'error': error_msg}, 500, cors_headers)
     except (AttributeError, ModuleNotFoundError, ImportError) as e_dep: # Common for version/dependency issues
-        error_msg = f"Dependency-related error (AttributeError, ModuleNotFoundError, ImportError) loading model '{model_file_name}': {str(e_dep)}. Check library versions."
+        error_msg = f"Dependency-related error loading model for {device_type} from GCS: {str(e_dep)}. Check library versions."
         print(f"Error: {error_msg}")
         return ({'error': error_msg}, 500, cors_headers)
-    except Exception as e: # General catch-all
-        # The original error '239' would likely be caught here if not by more specific ones.
-        error_msg = f"Error loading model '{model_file_name}': {str(e)}"
+    except Exception as e: # General catch-all for loading
+        error_msg = f"Error loading model for {device_type} from GCS: {str(e)}"
         print(f"Error: {error_msg}")
-        return ({'error': error_msg, 'details': 'Ensure model file is valid and dependencies are met.'}, 500, cors_headers)
+        return ({'error': error_msg, 'details': 'Ensure model file is valid, dependencies are met, and GCS access is configured.'}, 500, cors_headers)
 
     try:
-        print(f"Making prediction with model: {model_file_name}...")
+        print(f"Making prediction with {device_type} model...")
         predictions_transformed = model_pipeline.predict(X_predict)
         print(f"Raw prediction (transformed scale): {predictions_transformed}")
         
