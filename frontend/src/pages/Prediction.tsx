@@ -15,7 +15,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ScatterChart, Scatter, ZAxis, Cell } from "recharts";
 
-import { getPricePrediction } from "@/util/cloud_function";
+import { getPricePrediction, getKSimilarProducts } from "@/util/cloud_function";
 
 // Sample feature importance (simulated)
 const featureImportance = [
@@ -41,7 +41,6 @@ const Prediction = () => {
   const [gpu, setGpu] = useState<string>("");
   const [screenSize, setScreenSize] = useState<number>(15.6);
   const [os, setOs] = useState<string>("");
-  const [predictedPrice, setPredictedPrice] = useState<number | null>(null);
   const [bluetoothVersion, setBluetoothVersion] = useState<string>("1");
   //only for desktops
   const [psuWattage, setPsuWattage] = useState<number>(0);
@@ -50,6 +49,10 @@ const Prediction = () => {
   const [cameraResolution, setCameraResolution] = useState<string>("1080");
   const [screenTechnology, setScreenTechnology] = useState<string>("IPS");
   const [screenResolution, setScreenResolution] = useState<string>("1920 x 1080");
+
+  // output
+  const [predictedPrice, setPredictedPrice] = useState<number | null>(null);
+  const [similarProducts, setSimilarProducts] = useState<string[]>([]);
 
   // State for all laptop data and dropdown options
   const [allLaptops, setAllLaptops] = useState<Laptop[]>([]);
@@ -218,8 +221,11 @@ const Prediction = () => {
 
     try {
       const response = await getPricePrediction(data);
-      console.log(response.data)
+      console.log(response)
       setPredictedPrice(response.data.predicted_price);
+      const simProds = await getKSimilarProducts(data);
+      console.log(simProds)
+      setSimilarProducts(simProds);
     } catch (error) {            
       console.error("Failed to get price prediction:",{message: error.message,
       responseData: error.response?.data,
