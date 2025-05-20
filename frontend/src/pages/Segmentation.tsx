@@ -1,18 +1,25 @@
-
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { laptopData, Laptop } from "@/services/laptopData";
+import { 
+  getLaptopDataPromise,
+  Laptop 
+} from "@/services/laptopData";
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+interface EngineeredScreenDetail {
+  title: string;
+  engineered_screen_size_inches: number;
+}
 
 // Simple k-means implementation
 const kMeans = (data: any[], k: number, maxIterations = 10) => {
   // Convert laptops to feature vectors (normalized)
   const featureVectors = data.map(item => [
     item.normalizedRAM,
-    item.normalizedScreenSize,
+    item.normalizedScreenSize, // This will now use the effective screen size
     item.normalizedPrice,
     item.normalizedProductType
   ]);
@@ -100,7 +107,7 @@ const reduceDimensions = (clusteredData: any[], xFeature: string, yFeature: stri
     brand: item.brand,
     price: item.price,
     ram: item.ram,
-    screenSize: item.screenSize,
+    screenSize: item.effectiveScreenSize, // Use effectiveScreenSize for display
     productType: item.productType
   }));
 };
@@ -110,37 +117,91 @@ const Segmentation = () => {
   const [yAxis, setYAxis] = useState<string>("normalizedRAM");
   const [numClusters, setNumClusters] = useState<number>(3);
 
-  // Prepare data for clustering
+  const [allLaptops, setAllLaptops] = useState<Laptop[]>([]);
+  // Add state for engineered screen sizes
+  const [engineeredScreenSizes, setEngineeredScreenSizes] = useState<EngineeredScreenDetail[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null); // Added error state
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const laptopsPromise = getLaptopDataPromise();
+        const engineeredSizesPromise = fetch('/engineered_laptop_details.json')
+          .then(res => {
+            if (!res.ok) {
+              throw new Error(`HTTP error! status: ${res.status} for engineered_laptop_details.json`);
+            }
+            return res.json();
+          })
+          .catch(err => {
+            console.error("Failed to fetch engineered screen sizes:", err);
+            return []; // Return empty array on error so app can continue
+          });
+
+        const [laptops, engScreenSizes] = await Promise.all([laptopsPromise, engineeredSizesPromise]);
+        
+        setAllLaptops(laptops);
+        setEngineeredScreenSizes(engScreenSizes as EngineeredScreenDetail[]);
+
+      } catch (err) {
+        console.error("Failed to fetch data for segmentation:", err);
+        setError("Failed to load necessary data for segmentation."); // Set error state
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   const processedData = useMemo(() => {
-    // Normalize features for better clustering
-    const ramValues = laptopData.map(laptop => laptop.ram);
+    if (isLoading || allLaptops.length === 0) return [];
+
+    // Create a lookup map for engineered screen sizes
+    const engineeredScreenSizeMap = new Map<string, number>();
+    if (engineeredScreenSizes && engineeredScreenSizes.length > 0) {
+      engineeredScreenSizes.forEach(detail => {
+        engineeredScreenSizeMap.set(detail.title, detail.engineered_screen_size_inches);
+      });
+    }
+
+    const dataWithEffectiveScreenSize = allLaptops.map(laptop => {
+      const engineeredSize = engineeredScreenSizeMap.get(laptop.title);
+      return {
+        ...laptop,
+        effectiveScreenSize: typeof engineeredSize === 'number' && engineeredSize > 0 ? engineeredSize : laptop.screenSize,
+      };
+    });
+
+    const ramValues = dataWithEffectiveScreenSize.map(laptop => laptop.ram);
     const minRam = Math.min(...ramValues);
     const maxRam = Math.max(...ramValues);
     
-    const screenSizeValues = laptopData.map(laptop => laptop.screenSize);
+    // Use effectiveScreenSize for normalization
+    const screenSizeValues = dataWithEffectiveScreenSize.map(laptop => laptop.effectiveScreenSize);
     const minScreenSize = Math.min(...screenSizeValues);
     const maxScreenSize = Math.max(...screenSizeValues);
     
-    const priceValues = laptopData.map(laptop => laptop.price);
+    const priceValues = dataWithEffectiveScreenSize.map(laptop => laptop.price);
     const minPrice = Math.min(...priceValues);
     const maxPrice = Math.max(...priceValues);
     
-    const productTypes = Array.from(new Set(laptopData.map(laptop => laptop.productType)));
+    const productTypes = Array.from(new Set(dataWithEffectiveScreenSize.map(laptop => laptop.productType)));
     
-    const normalizedData = laptopData.map(laptop => ({
+    const normalizedData = dataWithEffectiveScreenSize.map(laptop => ({
       ...laptop,
-      normalizedRAM: (laptop.ram - minRam) / (maxRam - minRam),
-      normalizedScreenSize: (laptop.screenSize - minScreenSize) / (maxScreenSize - minScreenSize),
-      normalizedPrice: (laptop.price - minPrice) / (maxPrice - minPrice),
-      normalizedProductType: productTypes.indexOf(laptop.productType) / productTypes.length
+      normalizedRAM: maxRam === minRam ? 0 : (laptop.ram - minRam) / (maxRam - minRam),
+      normalizedScreenSize: maxScreenSize === minScreenSize ? 0 : (laptop.effectiveScreenSize - minScreenSize) / (maxScreenSize - minScreenSize),
+      normalizedPrice: maxPrice === minPrice ? 0 : (laptop.price - minPrice) / (maxPrice - minPrice),
+      normalizedProductType: productTypes.length <= 1 ? 0 : productTypes.indexOf(laptop.productType) / (productTypes.length -1) // Avoid division by zero if only one type
     }));
     
-    // Perform clustering
     const clusteredData = kMeans(normalizedData, numClusters);
     
-    // Reduce dimensions for visualization
     return reduceDimensions(clusteredData, xAxis, yAxis);
-  }, [numClusters, xAxis, yAxis]);
+  }, [allLaptops, engineeredScreenSizes, isLoading, numClusters, xAxis, yAxis]);
 
   // Colors for each cluster
   const clusterColors = ["#2563eb", "#7c3aed", "#dc2626", "#16a34a", "#ea580c"];
@@ -179,18 +240,36 @@ const Segmentation = () => {
       const data = payload[0].payload;
       return (
         <div className="bg-white p-4 border rounded shadow-lg">
-          <p className="font-semibold">{data.title}</p>
-          <p>Brand: {data.brand}</p>
-          <p>Price: ${data.price}</p>
-          <p>RAM: {data.ram}GB</p>
-          <p>Screen: {data.screenSize}"</p>
-          <p>Type: {data.productType}</p>
-          <p className="mt-2 font-semibold">Cluster: {data.cluster + 1}</p>
+          <p className="font-semibold">{data.title || 'N/A'}</p>
+          <p>Brand: {data.brand || 'N/A'}</p>
+          <p>Price: ${data.price !== undefined ? data.price.toFixed(2) : 'N/A'}</p>
+          <p>RAM: {data.ram !== undefined ? data.ram : 'N/A'}GB</p>
+          {/* Ensure screenSize in tooltip uses the effectiveScreenSize which is now passed as data.screenSize by reduceDimensions */}
+          <p>Screen: {data.screenSize !== undefined ? data.screenSize.toFixed(1) : 'N/A'}"</p> 
+          <p>Type: {data.productType || 'N/A'}</p>
+          <p className="mt-2 font-semibold">Cluster: {(data.cluster !== undefined ? data.cluster + 1 : 'N/A')}</p>
         </div>
       );
     }
     return null;
   };
+
+  if (isLoading) { 
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-2xl text-muted-foreground">Loading segmentation data...</p>
+      </div>
+    );
+  }
+
+  // Added error display
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-2xl text-red-500">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -237,18 +316,15 @@ const Segmentation = () => {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="clusters">Number of Clusters</Label>
-                <Select 
-                  value={numClusters.toString()} 
-                  onValueChange={val => setNumClusters(parseInt(val))}
-                >
-                  <SelectTrigger id="clusters">
-                    <SelectValue placeholder="Number of clusters" />
+                <Label htmlFor="num-clusters">Number of Clusters (K)</Label>
+                <Select value={numClusters.toString()} onValueChange={(value) => setNumClusters(parseInt(value))}>
+                  <SelectTrigger id="num-clusters">
+                    <SelectValue placeholder="Select K" />
                   </SelectTrigger>
                   <SelectContent>
-                    {[2, 3, 4, 5].map(n => (
-                      <SelectItem key={n} value={n.toString()}>
-                        {n} clusters
+                    {[2, 3, 4, 5].map(k => (
+                      <SelectItem key={k} value={k.toString()}>
+                        {k}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -256,54 +332,31 @@ const Segmentation = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="h-[500px] w-full">
+          <CardContent className="h-[600px]"> {/* Increased height for better visualization */}
+            {processedData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart
-                  margin={{
-                    top: 20,
-                    right: 20,
-                    bottom: 20,
-                    left: 20,
-                  }}
-                >
+                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid />
-                  <XAxis 
-                    type="number" 
-                    dataKey="x" 
-                    name={featureOptions.find(f => f.value === xAxis)?.label} 
-                    tick={{ fontSize: 12 }}
-                    label={{ 
-                      value: featureOptions.find(f => f.value === xAxis)?.label, 
-                      position: 'insideBottom',
-                      offset: -10
-                    }}
-                  />
-                  <YAxis 
-                    type="number" 
-                    dataKey="y" 
-                    name={featureOptions.find(f => f.value === yAxis)?.label}
-                    tick={{ fontSize: 12 }}
-                    label={{ 
-                      value: featureOptions.find(f => f.value === yAxis)?.label, 
-                      angle: -90, 
-                      position: 'insideLeft',
-                      offset: -5
-                    }}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
+                  <XAxis type="number" dataKey="x" name={featureOptions.find(f => f.value === xAxis)?.label || xAxis} />
+                  <YAxis type="number" dataKey="y" name={featureOptions.find(f => f.value === yAxis)?.label || yAxis} />
+                  <ZAxis type="number" dataKey="cluster" range={[100, 500]} name="Cluster" />
+                  <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
                   <Legend />
-                  {Object.entries(clusterGroups).map(([cluster, data]) => (
-                    <Scatter
-                      key={cluster}
-                      name={`Cluster ${parseInt(cluster) + 1}`}
-                      data={data}
-                      fill={clusterColors[parseInt(cluster) % clusterColors.length]}
+                  {Object.entries(clusterGroups).map(([cluster, items]) => (
+                    <Scatter 
+                      key={cluster} 
+                      name={`Cluster ${parseInt(cluster) + 1} (${items.length})`} 
+                      data={items} 
+                      fill={clusterColors[parseInt(cluster) % clusterColors.length]} 
                     />
                   ))}
                 </ScatterChart>
               </ResponsiveContainer>
-            </div>
+            ) : (
+              <div className="flex justify-center items-center h-full">
+                <p className="text-muted-foreground">No data available for clustering or not enough data points.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -322,7 +375,7 @@ const Segmentation = () => {
                     ></div>
                     <span className="font-medium">Cluster {item.cluster + 1}</span>
                   </div>
-                  <Badge variant="outline">{item.count} laptops</Badge>
+                  <Badge>{item.count} laptops</Badge>
                 </div>
               ))}
             </div>
