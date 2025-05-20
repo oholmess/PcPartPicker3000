@@ -5,7 +5,7 @@ const getPricePrediction = async (data) => {
   try {
 
     const requestConfig = {
-      method: 'GET',
+      method: 'POST',
       url: url,
       headers: {
         'Content-Type': 'application/json',
