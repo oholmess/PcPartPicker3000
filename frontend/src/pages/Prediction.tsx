@@ -215,7 +215,6 @@ const Prediction = () => {
     }
 
     try {
-    
       const response = await getPricePrediction(data);
       console.log(response.data)
       setPredictedPrice(response.data.predicted_price);
@@ -232,14 +231,14 @@ const Prediction = () => {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Price Prediction</h1>
         <p className="text-muted-foreground">
-          Estimate laptop prices based on specifications.
+          Estimate computer prices based on specifications.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Laptop Specifications</CardTitle>
+            <CardTitle>Computer Specifications</CardTitle>
             <CardDescription>
               Enter the specifications to predict the price.
             </CardDescription>
@@ -573,7 +572,7 @@ const Prediction = () => {
             <CardHeader>
               <CardTitle>Price vs. RAM</CardTitle>
               <CardDescription>
-                Correlation between RAM and laptop prices.
+                Correlation between RAM and copmuter prices.
               </CardDescription>
             </CardHeader>
             <CardContent>

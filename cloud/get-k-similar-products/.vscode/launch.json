@@ -1,0 +1,16 @@
+{
+    "configurations": [
+      {
+        "name": "Deploy Cloud Function",
+        "type": "cloudcode.cloudfunctions",
+        "request": "launch",
+        "functionName": "get-k-similar-products",
+        "gen": "GEN_2",
+        "entryPoint": "get_k_similar_products",
+        "revision": "1",
+        "testInput": "",
+        "region": "europe-southwest1",
+        "runtime": "python312"
+      }
+    ]
+}

@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import RamPriceChart from "@/components/charts/RamPriceChart";
+import OverallPriceDistributionChart from "@/components/charts/OverallPriceDistributionChart";
 import ScreenSizeDistribution from "@/components/charts/ScreenSizeDistribution";
 import ProductTypePriceDistribution from "@/components/charts/ProductTypePriceDistribution";
 import BrandDistributionChart from "@/components/charts/BrandDistributionChart";
@@ -13,7 +13,7 @@ const Index = () => {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Laptop Market Analysis</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Computer Market Analysis</h1>
           <p className="text-muted-foreground">
             Explore laptop offers, specifications, and market trends.
           </p>
@@ -29,10 +29,10 @@ const Index = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>RAM vs. Average Price</CardTitle>
+            <CardTitle>Overall Price Distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <RamPriceChart />
+            <OverallPriceDistributionChart />
           </CardContent>
         </Card>
 

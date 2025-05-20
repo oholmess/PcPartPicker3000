@@ -23,7 +23,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Sidebar */}
       <div className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 shadow-sm">
         <div className="p-4 border-b">
-          <h1 className="text-xl font-bold text-gray-900">Laptop Analytics</h1>
+          <h1 className="text-xl font-bold text-gray-900">Computer Analytics</h1>
         </div>
         <div className="flex flex-col flex-1 py-4">
           <nav className="space-y-1 px-2">
@@ -51,7 +51,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Mobile header */}
         <div className="md:hidden border-b border-gray-200 bg-white p-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-900">Laptop Analytics</h1>
+            <h1 className="text-xl font-bold text-gray-900">Computer Analytics</h1>
           </div>
         </div>
         
