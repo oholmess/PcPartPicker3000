@@ -1,0 +1,125 @@
+# This workflow will deploy source code on Cloud Run when a commit is pushed to
+# the "main" branch.
+#
+# To configure this workflow:
+#
+# 1. Enable the following Google Cloud APIs:
+#
+#    - Artifact Registry (artifactregistry.googleapis.com)
+#    - Cloud Build (cloudbuild.googleapis.com)
+#    - Cloud Run (run.googleapis.com)
+#    - IAM Credentials API (iamcredentials.googleapis.com)
+#
+#    You can learn more about enabling APIs at
+#    https://support.google.com/googleapi/answer/6158841.
+#
+# 2. Create and configure a Workload Identity Provider for GitHub:
+#    https://github.com/google-github-actions/auth#preferred-direct-workload-identity-federation.
+#
+#    Depending on how you authenticate, you will need to grant an IAM principal
+#    permissions on Google Cloud:
+#
+#    - Artifact Registry Administrator (roles/artifactregistry.admin)
+#    - Cloud Run Source Developer (roles/run.sourceDeveloper)
+#
+#    You can learn more about setting IAM permissions at
+#    https://cloud.google.com/iam/docs/manage-access-other-resources.
+#
+# 3. Change the values in the "env" block to match your values.
+
+name: 'Deploy to Cloud Functions from Source'
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cloud/functions/**'
+env:
+  PROJECT_ID: 'machinelearningproject-460413'
+  STORAGE_BUCKET: 'machinelearningproject-460413.appspot.com'
+jobs:
+  deploy:
+    runs-on: 'ubuntu-latest'
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 'create-company'
+            dir: './cloud/functions/create-company'
+            entry: 'create_company'
+            region: 'europe-west1'
+            auth: 'SECURE_OPTIONAL'
+            trigger_type: 'http'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@v4'
+        
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: '${{ env.PROJECT_ID }}'
+          workload_identity_provider: 'projects/618439571896/locations/global/workloadIdentityPools/github/providers/github-actions'
+          service_account: 'github-actions-sa@ectotrack.iam.gserviceaccount.com'
+
+      - name: Check for changes in functions
+        id: functions_changes
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            create-company:
+              - 'cloud/functions/create-company/**'
+            
+              
+      - name: 'Debug'
+        run: |
+          echo "Function name: ${{ matrix.name }}"
+          echo "Change detected: ${{ steps.functions_changes.outputs[matrix.name] }}"
+          echo "Trigger type: ${{ matrix.trigger_type }}"
+      
+      - id: 'deploy-http'
+        name: 'Deploy HTTP Function: ${{ matrix.name }}'
+        if: ${{ steps.functions_changes.outputs[matrix.name] == 'true' && matrix.trigger_type == 'http' }}
+        uses: 'google-github-actions/deploy-cloud-functions@v3.0.8'
+        with:
+          name: '${{ matrix.name }}'
+          runtime: 'python312'
+          region: '${{ matrix.region }}'
+          source_dir: '${{ matrix.dir }}'
+          entry_point: '${{ matrix.entry }}'
+          environment_variables: 'STORAGE_BUCKET=${{ env.STORAGE_BUCKET }}'
+          ingress_settings: 'ALLOW_ALL'
+          environment: 'GEN_2'
+          service_timeout: '60s'
+
+
+      - id: 'deploy-pubsub'
+        name: 'Deploy Pub/Sub Trigger: ${{ matrix.name }}'
+        if: ${{ steps.functions_changes.outputs[matrix.name] == 'true' && matrix.trigger_type == 'pubsub' }}
+        uses: 'google-github-actions/deploy-cloud-functions@v3.0.8'
+        with:
+          name: '${{ matrix.name }}'
+          runtime: 'python312'
+          region: '${{ matrix.region }}'
+          source_dir: '${{ matrix.dir }}'
+          entry_point: '${{ matrix.entry }}'
+          environment_variables: 'STORAGE_BUCKET=${{ env.STORAGE_BUCKET }}'
+          environment: 'GEN_2'
+          service_timeout: '540s'
+          event_trigger_type: 'google.cloud.pubsub.topic.v1.messagePublished'
+          event_trigger_pubsub_topic: 'projects/${{ env.PROJECT_ID }}/topics/${{ matrix.topic }}'
+          event_trigger_retry: true
+
+      - name: 'Show HTTP output'
+        if: ${{ steps.deploy-http.outcome == 'success' }}
+        run: |
+          echo "HTTP Function ${{ matrix.name }} deployed to: ${{ steps.deploy-http.outputs.url }}"
+          
+      - name: 'Show Pub/Sub Trigger output'
+        if: ${{ steps.deploy-pubsub.outcome == 'success' }}
+        run: |
+          echo "Pub/Sub Trigger Function ${{ matrix.name }} deployed with topic: ${{ matrix.topic }}"

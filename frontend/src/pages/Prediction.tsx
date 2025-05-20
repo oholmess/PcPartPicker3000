@@ -54,15 +54,15 @@ const Prediction = () => {
 
         const cpus = await getCPUs();
         setCpuOptions(cpus);
-        if (cpus.length > 0 && cpu === "") setCpu(cpus[0]);
+        if (cpus.length > 0) setCpu(cpus[0]);
 
         const gpus = await getGPUs();
         setGpuOptions(gpus);
-        if (gpus.length > 0 && gpu === "") setGpu(gpus[0]);
+        if (gpus.length > 0) setGpu(gpus[0]);
 
         const oses = await getOSes();
         setOsOptions(oses);
-        if (oses.length > 0 && os === "") setOs(oses[0]);
+        if (oses.length > 0) setOs(oses[0]);
 
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -71,7 +71,7 @@ const Prediction = () => {
       }
     };
     fetchData();
-  }, []); // Initial fetch
+  }, []); // Removed cpu, gpu, os from dependency array as they are set inside
 
   // Correlation data for visualization
   const correlationData = useMemo(() => {

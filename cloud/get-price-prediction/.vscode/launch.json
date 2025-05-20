@@ -1,0 +1,16 @@
+{
+    "configurations": [
+      {
+        "name": "Deploy Cloud Function",
+        "type": "cloudcode.cloudfunctions",
+        "request": "launch",
+        "functionName": "get-price-prediction",
+        "gen": "GEN_2",
+        "entryPoint": "get_price_prediction",
+        "revision": "1",
+        "testInput": "",
+        "region": "europe-southwest1",
+        "runtime": "python312"
+      }
+    ]
+}
