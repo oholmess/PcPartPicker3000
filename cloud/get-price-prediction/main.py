@@ -209,7 +209,16 @@ def get_price_prediction(request):
         model_pipeline = joblib.load(model_path)
         print(f"Successfully loaded model: {model_file_name}")
         print(f"Model pipeline object: {model_pipeline}")
-    except Exception as e:
+    except EOFError as eof: # Common for corrupted or incomplete pickle files
+        error_msg = f"EOFError loading model '{model_file_name}': {str(eof)}. File might be corrupted or truncated."
+        print(f"Error: {error_msg}")
+        return ({'error': error_msg}, 500, cors_headers)
+    except (AttributeError, ModuleNotFoundError, ImportError) as e_dep: # Common for version/dependency issues
+        error_msg = f"Dependency-related error (AttributeError, ModuleNotFoundError, ImportError) loading model '{model_file_name}': {str(e_dep)}. Check library versions."
+        print(f"Error: {error_msg}")
+        return ({'error': error_msg}, 500, cors_headers)
+    except Exception as e: # General catch-all
+        # The original error '239' would likely be caught here if not by more specific ones.
         error_msg = f"Error loading model '{model_file_name}': {str(e)}"
         print(f"Error: {error_msg}")
         return ({'error': error_msg, 'details': 'Ensure model file is valid and dependencies are met.'}, 500, cors_headers)
