@@ -15,6 +15,8 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ScatterChart, Scatter, ZAxis, Cell } from "recharts";
 
+import { getPricePrediction } from "@/util/cloud_function";
+
 // Sample feature importance (simulated)
 const featureImportance = [
   { feature: "CPU", importance: 0.28 },
@@ -28,14 +30,26 @@ const featureImportance = [
 
 const Prediction = () => {
   // State for form inputs
+  const [deviceType, setDeviceType] = useState<string>("laptop");
   const [ram, setRam] = useState<number>(16);
   const [storage, setStorage] = useState<number>(512);
   const [cpu, setCpu] = useState<string>("");
   const [clockSpeed, setClockSpeed] = useState<number>(2.8);
+  const [cores, setCores] = useState<number>(4);
+  const [ramType, setRamType] = useState<string>("DDR4");
+  const [ramFrequency, setRamFrequency] = useState<number>(2666);
   const [gpu, setGpu] = useState<string>("");
   const [screenSize, setScreenSize] = useState<number>(15.6);
   const [os, setOs] = useState<string>("");
   const [predictedPrice, setPredictedPrice] = useState<number | null>(null);
+  const [bluetoothVersion, setBluetoothVersion] = useState<string>("1");
+  //only for desktops
+  const [psuWattage, setPsuWattage] = useState<number>(0);
+  //only for laptops
+  const [batteryWattHours, setBatteryWattHours] = useState<number>(0);
+  const [cameraResolution, setCameraResolution] = useState<string>("1080");
+  const [screenTechnology, setScreenTechnology] = useState<string>("IPS");
+  const [screenResolution, setScreenResolution] = useState<string>("1920 x 1080");
 
   // State for all laptop data and dropdown options
   const [allLaptops, setAllLaptops] = useState<Laptop[]>([]);
@@ -43,6 +57,8 @@ const Prediction = () => {
   const [gpuOptions, setGpuOptions] = useState<string[]>([]);
   const [osOptions, setOsOptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const bluetoothOptions = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
 
   // Fetch data on component mount
   useEffect(() => {
@@ -102,51 +118,51 @@ const Prediction = () => {
   }, [allLaptops, isLoading]); // Added isLoading and allLaptops to dependencies
 
   // Price prediction function (simplified simulation)
-  const predictPrice = () => {
-    if (isLoading) return; // Don't predict if loading
+  // const predictPrice = () => {
+  //   if (isLoading) return; // Don't predict if loading
 
-    // Base price based on CPU
-    let basePrice = 500;
-    if (cpu.includes("i7") || cpu.includes("Ryzen 7") || cpu.includes("M2")) {
-      basePrice = 800;
-    } else if (cpu.includes("i5") || cpu.includes("Ryzen 5") || cpu.includes("M1")) {
-      basePrice = 650;
-    }
+  //   // Base price based on CPU
+  //   let basePrice = 500;
+  //   if (cpu.includes("i7") || cpu.includes("Ryzen 7") || cpu.includes("M2")) {
+  //     basePrice = 800;
+  //   } else if (cpu.includes("i5") || cpu.includes("Ryzen 5") || cpu.includes("M1")) {
+  //     basePrice = 650;
+  //   }
     
-    // Adjust for RAM
-    const ramPrice = ram * 15;
+  //   // Adjust for RAM
+  //   const ramPrice = ram * 15;
     
-    // Adjust for storage
-    const storagePrice = storage * 0.1;
+  //   // Adjust for storage
+  //   const storagePrice = storage * 0.1;
     
-    // Adjust for GPU
-    let gpuPrice = 0;
-    if (gpu.includes("RTX 30") || gpu.includes("RX 6")) {
-      gpuPrice = 300;
-    } else if (gpu.includes("Iris") || gpu.includes("M1") || gpu.includes("M2")) {
-      gpuPrice = 150;
-    }
+  //   // Adjust for GPU
+  //   let gpuPrice = 0;
+  //   if (gpu.includes("RTX 30") || gpu.includes("RX 6")) {
+  //     gpuPrice = 300;
+  //   } else if (gpu.includes("Iris") || gpu.includes("M1") || gpu.includes("M2")) {
+  //     gpuPrice = 150;
+  //   }
     
-    // Adjust for screen size
-    const screenPrice = screenSize * 20;
+  //   // Adjust for screen size
+  //   const screenPrice = screenSize * 20;
     
-    // Adjust for OS
-    let osPrice = 0;
-    if (os === "macOS") {
-      osPrice = 200;
-    } else if (os === "Windows 11") {
-      osPrice = 100;
-    }
+  //   // Adjust for OS
+  //   let osPrice = 0;
+  //   if (os === "macOS") {
+  //     osPrice = 200;
+  //   } else if (os === "Windows 11") {
+  //     osPrice = 100;
+  //   }
     
-    // Adjust for clock speed
-    const clockPrice = clockSpeed * 50;
+  //   // Adjust for clock speed
+  //   const clockPrice = clockSpeed * 50;
     
-    // Calculate final price with some randomness
-    const calculatedPrice = basePrice + ramPrice + storagePrice + gpuPrice + screenPrice + osPrice + clockPrice;
-    const finalPrice = Math.round(calculatedPrice * (0.95 + Math.random() * 0.1));
+  //   // Calculate final price with some randomness
+  //   const calculatedPrice = basePrice + ramPrice + storagePrice + gpuPrice + screenPrice + osPrice + clockPrice;
+  //   const finalPrice = Math.round(calculatedPrice * (0.95 + Math.random() * 0.1));
     
-    setPredictedPrice(finalPrice);
-  };
+  //   setPredictedPrice(finalPrice);
+  // };
 
   if (isLoading) { // Added loading indicator
     return (
@@ -155,6 +171,61 @@ const Prediction = () => {
       </div>
     );
   }
+
+  const predictPrice = async () => {
+    let data = {};
+
+    if (deviceType === "desktop") {
+      data = {
+        "device_type": deviceType,
+        "feature_values": {
+          "procesador": cpu,
+          "procesador_frecuencia_turbo_max_ghz": clockSpeed,
+          "procesador_numero_nucleos": cores,
+          "disco_duro_capacidad_de_memoria_ssd_gb": storage,
+          "ram_memoria_gb": ram,
+          "ram_tipo": ramType,
+          "ram_frecuencia_de_la_memoria_mhz": ramFrequency,
+          "sistema_operativo_sistema_operativo": os,
+          "comunicaciones_version_bluetooth": bluetoothVersion,
+          "alimentacion_wattage_binned": psuWattage
+
+        }
+      }
+    }
+    else if (deviceType === "laptop") {
+      data = {
+        "device_type": deviceType,
+        "feature_values": {
+          "procesador": cpu,
+          "procesador_frecuencia_turbo_max_ghz": clockSpeed,
+          "procesador_numero_nucleos": cores,
+          "disco_duro_capacidad_de_memoria_ssd_gb": storage,
+          "ram_memoria_gb": ram,
+          "ram_tipo": ramType,
+          "ram_frecuencia_de_la_memoria_mhz": ramFrequency,
+          "sistema_operativo_sistema_operativo": os,
+          "comunicaciones_version_bluetooth": bluetoothVersion,
+          "alimentacion_vatios_hora": batteryWattHours,
+          "camara_resolucion_pixeles": cameraResolution,
+          "pantalla_tecnologia": screenTechnology,
+          "pantalla_resolucion_pixeles": screenResolution,
+        }
+      }
+    }
+
+    try {
+    
+      const response = await getPricePrediction(data);
+      console.log(response.data)
+      setPredictedPrice(response.data.predicted_price);
+    } catch (error) {            
+      console.error("Failed to get price prediction:",{message: error.message,
+      responseData: error.response?.data,
+      status: error.response?.status,
+      fullError: error});
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -174,6 +245,20 @@ const Prediction = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+
+            <div className="space-y-2">
+              <Label htmlFor="deviceType">Device Type</Label>
+              <Select value={deviceType} onValueChange={setDeviceType} disabled={isLoading}>
+                <SelectTrigger id="deviceType">
+                  <SelectValue placeholder="Select Device Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="laptop">Laptop</SelectItem>
+                  <SelectItem value="desktop">Desktop</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label htmlFor="ram">RAM (GB)</Label>
@@ -239,6 +324,51 @@ const Prediction = () => {
             </div>
 
             <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="cores">Cores</Label>
+                <span className="text-sm font-medium">{cores}</span>
+              </div>
+              <Slider
+                id="cores"
+                min={1}
+                max={16}
+                step={1}
+                value={[cores]}
+                onValueChange={(value) => setCores(value[0])}
+                className="w-full"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="ramType">Ram Type</Label>
+              <Select value={ramType} onValueChange={setRamType} disabled={isLoading}>
+                <SelectTrigger id="ramType">
+                  <SelectValue placeholder="Select Ram Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DDR4">DDR4</SelectItem>
+                  <SelectItem value="DDR5">DDR5</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="ramFrequency">Ram Frequency (MHz)</Label>
+                <span className="text-sm font-medium">{ramFrequency} MHz</span>
+              </div>
+              <Slider
+                id="ramFrequency"
+                min={2666}
+                max={4800}
+                step={100}
+                value={[ramFrequency]}
+                onValueChange={(value) => setRamFrequency(value[0])}
+                className="w-full"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="gpu">GPU</Label>
               <Select value={gpu} onValueChange={setGpu} disabled={isLoading || gpuOptions.length === 0}>
                 <SelectTrigger id="gpu">
@@ -254,7 +384,7 @@ const Prediction = () => {
               </Select>
             </div>
 
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label htmlFor="screenSize">Screen Size (inches)</Label>
                 <span className="text-sm font-medium">{screenSize.toFixed(1)}"</span>
@@ -268,7 +398,7 @@ const Prediction = () => {
                 onValueChange={(value) => setScreenSize(value[0])}
                 className="w-full"
               />
-            </div>
+            </div> */}
 
             <div className="space-y-2">
               <Label htmlFor="os">Operating System</Label>
@@ -285,6 +415,108 @@ const Prediction = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bluetoothVersion">Bluetooth Version</Label>
+              <Select value={bluetoothVersion} onValueChange={setBluetoothVersion} disabled={isLoading}>
+                <SelectTrigger id="bluetoothVersion">
+                  <SelectValue placeholder="Select Bluetooth Version" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bluetoothOptions.map(option => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {deviceType === "laptop" && (
+              <>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="batteryWattHours">Battery Watt Hours</Label>
+                    <span className="text-sm font-medium">{batteryWattHours} Wh</span>
+                  </div>
+                  <Slider
+                    id="batteryWattHours"
+                    min={0}
+                    max={1000}
+                    step={10}
+                    value={[batteryWattHours]}
+                    onValueChange={(value) => setBatteryWattHours(value[0])}
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cameraResolution">Camera Resolution</Label>
+                  <Select value={cameraResolution} onValueChange={setCameraResolution} disabled={isLoading}>
+                    <SelectTrigger id="cameraResolution">
+                      <SelectValue placeholder="Select Camera Resolution" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["1080", "2160", "4320"].map(option => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="bluetoothVersion">Bluetooth Version</Label>
+                  <Select value={screenTechnology} onValueChange={setScreenTechnology} disabled={isLoading}>
+                    <SelectTrigger id="screenTechnology">
+                      <SelectValue placeholder="Select Screen Technology" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["IPS", "OLED", "VA"].map(option => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="screenResolution">Screen Resolution</Label>
+                  <Select value={screenResolution} onValueChange={setScreenResolution} disabled={isLoading}>
+                    <SelectTrigger id="screenResolution">
+                      <SelectValue placeholder="Select Screen Resolution" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["1920 x 1080", "2560 x 1440", "3840 x 2160"].map(option => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+
+            {deviceType === "desktop" && (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="psuWattage">PSU Wattage</Label>
+                  <span className="text-sm font-medium">{psuWattage} W</span>
+                </div>
+                <Slider
+                  id="psuWattage"
+                  min={0}
+                  max={1000}
+                  step={10}
+                  value={[psuWattage]}
+                  onValueChange={(value) => setPsuWattage(value[0])}
+                  className="w-full"
+                />
+              </div>
+            )}
 
             <CardFooter>
               <Button onClick={predictPrice} className="w-full" disabled={isLoading}>Predict Price</Button>

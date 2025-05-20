@@ -1996,7 +1996,7 @@
   },
   {
     "id": 134,
-    "title": "Samsung Galaxy Book4 Edge 16\"",
+    "title": "Samsung Galaxy Book4 Edge 16\"None",
     "brand": "Samsung",
     "series": "Samsung Galaxy Book",
     "screenSize": 16.0,
@@ -2581,7 +2581,7 @@
   },
   {
     "id": 173,
-    "title": "Lenovo Yoga 7 2-in-1 Gen 9 14\"",
+    "title": "Lenovo Yoga 7 2-in-1 Gen 9 14\"None",
     "brand": "Lenovo",
     "series": "Lenovo Yoga",
     "screenSize": 14.0,
@@ -5026,7 +5026,7 @@
   },
   {
     "id": 336,
-    "title": "Lenovo Yoga Slim 7i Pro Gen 7 14\"",
+    "title": "Lenovo Yoga Slim 7i Pro Gen 7 14\"None",
     "brand": "Lenovo",
     "series": "Lenovo Yoga",
     "screenSize": 14.0,
@@ -34516,7 +34516,7 @@
   },
   {
     "id": 2302,
-    "title": "Lenovo Legion Pro 7i Gen 8 16\"",
+    "title": "Lenovo Legion Pro 7i Gen 8 16\"None",
     "brand": "Lenovo",
     "series": "Lenovo Legion",
     "screenSize": 15.6,
@@ -59591,7 +59591,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -61106,7 +61106,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -62336,7 +62336,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -62756,7 +62756,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -64751,7 +64751,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -65261,7 +65261,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -67241,7 +67241,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -67976,7 +67976,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -70241,7 +70241,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -74201,7 +74201,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "ninguno"
   },
   {
@@ -76796,7 +76796,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -77141,7 +77141,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -77381,7 +77381,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -77726,7 +77726,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -82946,7 +82946,7 @@
     "storage": 0,
     "cpu": "AMD Ryzen 5 7500F",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "ninguno"
   },
   {
@@ -83111,7 +83111,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -85886,7 +85886,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -91901,7 +91901,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "ninguno"
   },
   {
@@ -98066,7 +98066,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -103496,7 +103496,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "Unknown_OS"
   },
   {
@@ -103676,7 +103676,7 @@
     "storage": 0,
     "cpu": "Intel Celeron N4500",
     "clockSpeed": 4.3,
-    "gpu": "",
+    "gpu": "None",
     "os": "ninguno"
   },
   {
