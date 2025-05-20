@@ -220,12 +220,12 @@ const Prediction = () => {
     }
 
     try {
-      const response = await getPricePrediction(data);
-      console.log(response)
-      setPredictedPrice(response.data.predicted_price);
       const simProds = await getKSimilarProducts(data);
       console.log(simProds)
       setSimilarProducts(simProds);
+      const response = await getPricePrediction(data);
+      console.log(response)
+      setPredictedPrice(response.data.predicted_price);
     } catch (error) {            
       console.error("Failed to get price prediction:",{message: error.message,
       responseData: error.response?.data,
