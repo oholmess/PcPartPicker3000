@@ -62,11 +62,7 @@ PcPartPicker3000/
 │       └── google-cloudrun-source.yml
 ├── .DS_Store
 ├── README.md
-├── assignemnt/
-│   ├── instructions/
-│   │   ├── MLF_22_A1 - ASSIGNMENT - GROUP ASSIGNMENT - Application Development.pdf
-│   │   └── MLF_22_A1 - GROUP ASSIGNMENT Team Groups.txt
-│   └── raw_data/
+├──raw_data/
 │       ├── db_computers_2025_raw.csv
 │       └── db_computers_columns_names.txt
 ├── cloud/
@@ -91,8 +87,7 @@ PcPartPicker3000/
 │       ├── laptop_model_pipeline.joblib
 │       ├── main.py
 │       └── requirements.txt
-├── Document/
-│   └── Machine Learning Final Presentation Documentation.pdf
+│ 
 ├── frontend/
 │   ├── .gitignore
 │   ├── README.md
@@ -153,8 +148,7 @@ PcPartPicker3000/
 │   │       └── preprocessor_laptop.joblib
 │   ├── static_frontend_data.ipynb
 │   └── temp.ipynb
-├── presentation/
-│   └── MLF_22_group5_pcpartpicker3000_.pdf
+│ 
 ├── requirements.txt
 └── temp_helper_funcs/
     ├── convert_csv_to_json.py
