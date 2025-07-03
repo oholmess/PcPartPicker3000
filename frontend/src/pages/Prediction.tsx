@@ -809,33 +809,33 @@ const Prediction = () => {
   const bluetoothOptions = ["5.1", "5.2", "5.3", "5.4"];
 
   // Fetch data on component mount
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     setIsLoading(true);
-  //     try {
-  //       const laptops = await getLaptopDataPromise();
-  //       setAllLaptops(laptops);
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const laptops = await getLaptopDataPromise();
+        setAllLaptops(laptops);
 
-  //       const cpus = await getCPUs();
-  //       setCpuOptions(cpus);
-  //       if (cpus.length > 0) setCpu(cpus[0]);
+        const cpus = await getCPUs();
+        // setCpuOptions(cpus);
+        if (cpus.length > 0) setCpu(cpus[0]);
 
-  //       const gpus = await getGPUs();
-  //       setGpuOptions(gpus);
-  //       if (gpus.length > 0) setGpu(gpus[0]);
+        const gpus = await getGPUs();
+        // setGpuOptions(gpus);
+        if (gpus.length > 0) setGpu(gpus[0]);
 
-  //       const oses = await getOSes();
-  //       setOsOptions(oses);
-  //       if (oses.length > 0) setOs(oses[0]);
+        const oses = await getOSes();
+        // setOsOptions(oses);
+        if (oses.length > 0) setOs(oses[0]);
 
-  //     } catch (error) {
-  //       console.error("Failed to fetch data:", error);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-  //   fetchData();
-  // }, []); // Removed cpu, gpu, os from dependency array as they are set inside
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   // Correlation data for visualization
   const correlationData = useMemo(() => {
@@ -1298,40 +1298,6 @@ const Prediction = () => {
                       <SelectValue placeholder="Select Screen Resolution" />
                     </SelectTrigger>
                     <SelectContent>
-    "3840x2400",
-    "3840x2160",
-    "3456x2234",
-    "3240x2160",
-    "3200x2000",
-    "3120x2080",
-    "3024x1964",
-    "3072x1920",
-    "3000x2000",
-    "2944x1840",
-    "2920x1200",
-    "2880x1920",
-    "2880x1864",
-    "2880x1800",
-    "2880x1620",
-    "2560x1664",
-    "2560x1600",
-    "2560x1440",
-    "2496x1664",
-    "2400x1600",
-    "2304x1536",
-    "2256x1504",
-    "2240x1400",
-    "2160x1440",
-    "2160x1350",
-    "2048x1536",
-    "2048x1280",
-    "1920x1280",
-    "1920x1200",
-    "1920x1080",
-    "1600x900",
-    "1536x1024",
-    "1366x912",
-    "1366x768",
                       {["1920 x 1080", "2560 x 1440", "3840 x 2160"].map(option => (
                         <SelectItem key={option} value={option}>
                           {option}
