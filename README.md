@@ -52,6 +52,110 @@ To set up the project environment, follow these steps:
        cd ..
        ```
 
+## File Structure
+
+```text
+PcPartPicker3000/
+├── .gitattributes
+├── .github/
+│   └── workflows/
+│       └── google-cloudrun-source.yml
+├── .DS_Store
+├── README.md
+├──raw_data/
+│       ├── db_computers_2025_raw.csv
+│       └── db_computers_columns_names.txt
+├── cloud/
+│   ├── get-k-similar-products/
+│   │   ├── .vscode/
+│   │   │   └── launch.json
+│   │   ├── README.md
+│   │   ├── X_train_original_for_knn_lookup_desktop.csv
+│   │   ├── X_train_original_for_knn_lookup_laptop.csv
+│   │   ├── main.py
+│   │   ├── main.py.zip
+│   │   ├── nn_model_desktop.joblib
+│   │   ├── nn_model_laptop.joblib
+│   │   ├── preprocessor_desktop_knn.joblib
+│   │   ├── preprocessor_laptop_knn.joblib
+│   │   └── requirements.txt
+│   └── get-price-prediction/
+│       ├── .vscode/
+│       │   └── launch.json
+│       ├── README.md
+│       ├── desktop_model_pipeline.joblib
+│       ├── laptop_model_pipeline.joblib
+│       ├── main.py
+│       └── requirements.txt
+│ 
+├── frontend/
+│   ├── .gitignore
+│   ├── README.md
+│   ├── bun.lockb
+│   ├── components.json
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── node_modules/ [...]
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── public/
+│   │   ├── all_prices.json
+│   │   ├── engineered_laptop_details.json
+│   │   ├── favicon.ico
+│   │   ├── laptop_data.json
+│   │   ├── laptop_screen_sizes.json
+│   │   ├── placeholder.svg
+│   │   └── robots.txt
+│   ├── src/
+│   │   ├── App.css
+│   │   ├── App.tsx
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   ├── index.css
+│   │   ├── lib/
+│   │   ├── main.tsx
+│   │   ├── pages/
+│   │   ├── services/
+│   │   ├── util/
+│   │   └── vite-env.d.ts
+│   ├── tailwind.config.ts
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
+├── local_work/
+│   ├── EDA.ipynb
+│   ├── K-Means_k=2 documented.ipynb
+│   ├── KNN_2 documented.ipynb
+│   ├── Predictive_Model.ipynb
+│   ├── df_engineered.csv
+│   ├── df_engineered_desktop_pc.csv
+│   ├── df_engineered_laptop.csv
+│   ├── df_engineered_partial_pc.csv
+│   ├── df_modified.csv
+│   ├── piplines/
+│   │   ├── LightGBM/
+│   │   │   ├── desktop_model_pipeline.joblib
+│   │   │   └── laptop_model_pipeline.joblib
+│   │   └── kNN/
+│   │       ├── X_train_original_for_knn_lookup_desktop.csv
+│   │       ├── X_train_original_for_knn_lookup_laptop.csv
+│   │       ├── nn_model_desktop.joblib
+│   │       ├── nn_model_laptop.joblib
+│   │       ├── preprocessor_desktop_knn.joblib
+│   │       └── preprocessor_laptop.joblib
+│   ├── static_frontend_data.ipynb
+│   └── temp.ipynb
+│ 
+├── requirements.txt
+└── temp_helper_funcs/
+    ├── convert_csv_to_json.py
+    ├── generate_screen_size_json.py
+    └── modify_csv.py
+```
+
 ## Usage
 
 The application is a multi-page Streamlit web app with a separate frontend component.
@@ -104,9 +208,3 @@ If you'd like to contribute, please fork the repository and use a feature branch
 3.  Commit your changes (`git commit -am 'Add some feature'`).
 4.  Push to the branch (`git push origin feature/your-feature`).
 5.  Create a new Pull Request.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE.md) file for details.
-
-*(You will need to create a `LICENSE.md` file in your project root containing the full text of the MIT License if you choose this license.)* 
